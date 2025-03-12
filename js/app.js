@@ -1,7 +1,7 @@
 // app.js - Main application initialization
 
 // Global configuration
-const DEBUG = false;
+const DEBUG = true;
 
 // Initialize when document is ready
 document.addEventListener('DOMContentLoaded', function() {
