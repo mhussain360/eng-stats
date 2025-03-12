@@ -8,6 +8,12 @@ import http.server
 import socketserver
 import webbrowser
 import threading
+import json
+import tempfile
+import sys
+import traceback
+import cgi
+import io
 
 repo_path = "/Users/mhussain/src/ZT-trustedpath/"
 # GitHub repository URL - adjust this to your actual GitHub repository URL
@@ -29,7 +35,7 @@ def get_git_log_for_author(author_email, start_date):
             '--format=%aI'  # ISO 8601-like format
         ]
 
-        result = subprocess.run(f'git  log --author {author_email} --since {start_date.strftime("%Y-%m-%d")} --format=%aI',
+        result = subprocess.run(f'git log --author {author_email} --since {start_date.strftime("%Y-%m-%d")} --format=%aI',
             capture_output=True,
             text=True,
             shell=True,
@@ -118,64 +124,72 @@ def save_commit_descriptions(developer_name, commit_descriptions):
     return file_path
 
 def process_git_logs(input_file, output_file):
-    # Read input CSV
-    df = pd.read_csv(input_file)
+    """
+    Process git logs for developers in input_file and write results to output_file
+    Returns True if successful, False otherwise
+    """
+    try:
+        # Read input CSV
+        df = pd.read_csv(input_file)
 
-    # Get current date and date 12 months ago
-    end_date = datetime.now()
-    start_date = end_date - timedelta(days=365)
+        # Get current date and date 12 months ago
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=365)
 
-    # Generate month columns
-    month_columns = generate_month_columns(end_date)
+        # Generate month columns
+        month_columns = generate_month_columns(end_date)
 
-    # Initialize results list
-    results = []
+        # Initialize results list
+        results = []
 
-    # Process each developer
-    for _, row in df.iterrows():
-        developer_name = row['Developer Name']
-        developer_email = row['Developer']  # This is the email column
-        grade = row['Grade']
-        team = row['Team']
-        print(f"Processing developer: {developer_name}")
+        # Process each developer
+        for _, row in df.iterrows():
+            developer_name = row['Developer Name']
+            developer_email = row['Developer']  # This is the email column
+            grade = row['Grade']
+            team = row['Team']
+            print(f"Processing developer: {developer_name}")
 
-        # Get git log for developer
-        commit_dates = get_git_log_for_author(developer_email, start_date)
-        #print(f"Commit dates: {commit_dates}")
-        monthly_commits = count_commits_per_month(commit_dates)
+            # Get git log for developer
+            commit_dates = get_git_log_for_author(developer_email, start_date)
+            monthly_commits = count_commits_per_month(commit_dates)
 
-        # Get commit descriptions and save to file
-        commit_descriptions = get_commit_descriptions_for_author(developer_email, start_date)
-        if commit_descriptions and commit_descriptions[0]:  # Check if there are any commits
-            file_path = save_commit_descriptions(developer_name, commit_descriptions)
-            print(f"Saved commit descriptions to {file_path}")
+            # Get commit descriptions and save to file
+            commit_descriptions = get_commit_descriptions_for_author(developer_email, start_date)
+            if commit_descriptions and commit_descriptions[0]:  # Check if there are any commits
+                file_path = save_commit_descriptions(developer_name, commit_descriptions)
+                print(f"Saved commit descriptions to {file_path}")
 
-        # Create result row
-        result_row = {
-            'Developer Name': developer_name,
-            'Developer': developer_email,
-            'Grade': grade,
-            'Team': team
-        }
+            # Create result row
+            result_row = {
+                'Developer Name': developer_name,
+                'Developer': developer_email,
+                'Grade': grade,
+                'Team': team
+            }
 
-        # Add monthly commit counts
-        for month in month_columns:
-            result_row[month] = monthly_commits.get(month,0)
-        results.append(result_row)
+            # Add monthly commit counts
+            for month in month_columns:
+                result_row[month] = monthly_commits.get(month, 0)
+            results.append(result_row)
 
-    # Create output DataFrame
-    output_df = pd.DataFrame(results)
+        # Create output DataFrame
+        output_df = pd.DataFrame(results)
 
-    # Reorder columns
-    columns = ['Developer Name', 'Developer', 'Grade', 'Team'] + month_columns
-    output_df = output_df[columns]
+        # Reorder columns
+        columns = ['Developer Name', 'Developer', 'Grade', 'Team'] + month_columns
+        output_df = output_df[columns]
 
-    # Save to CSV
-    output_df.to_csv(output_file, index=False)
-    print(f"Results saved to {output_file}")
+        # Save to CSV
+        output_df.to_csv(output_file, index=False)
+        print(f"Results saved to {output_file}")
+        return True
+    except Exception as e:
+        print(f"Error processing git logs: {e}")
+        traceback.print_exc()
+        return False
 
 class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
-        # Serve the visualizer as the default file
     def serve_file(self, path, filename, content_type=None):
         """Serve a file with appropriate headers based on file type"""
         self.path = path
@@ -211,8 +225,7 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 self.wfile.write(file.read())
         else:
             print(f"Warning: File not found: {file_path}")
-        return
-
+            return
 
     def do_GET(self):
         # Serve the visualizer as the default file
@@ -268,7 +281,88 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             # For other requests, use the path as the filename
             requested_path = self.path[1:]  # Remove leading slash
             self.serve_file(self.path, requested_path)
-        # For all other requests, use the default http.server.SimpleHTTPRequestHandler.do_GET(self)
+
+    def do_POST(self):
+        if self.path == '/api/upload':
+            try:
+                # Get content length
+                content_length = int(self.headers['Content-Length'])
+
+                # Parse form data
+                form = cgi.FieldStorage(
+                    fp=self.rfile,
+                    headers=self.headers,
+                    environ={'REQUEST_METHOD': 'POST',
+                            'CONTENT_TYPE': self.headers['Content-Type']}
+                )
+
+                # Check if the file field exists
+                if 'file' not in form:
+                    self.send_response(400)
+                    self.send_header('Content-type', 'text/plain')
+                    self.end_headers()
+                    self.wfile.write(b'No file uploaded')
+                    return
+
+                # Get the file item
+                fileitem = form['file']
+
+                # Check if it's an uploaded file
+                if not fileitem.filename:
+                    self.send_response(400)
+                    self.send_header('Content-type', 'text/plain')
+                    self.end_headers()
+                    self.wfile.write(b'No file selected')
+                    return
+
+                # Create a temporary file to store the uploaded CSV
+                with tempfile.NamedTemporaryFile(suffix='.csv', delete=False) as temp_file:
+                    # Write the uploaded file to the temporary file
+                    temp_file.write(fileitem.file.read())
+                    temp_file_path = temp_file.name
+
+                # Process the uploaded file
+                output_file = getattr(self.server, 'output_file', 'git_commit_history.csv')
+                success = process_git_logs(temp_file_path, output_file)
+
+                # Remove temporary file
+                try:
+                    os.unlink(temp_file_path)
+                except:
+                    pass
+
+                if success:
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/json')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({
+                        'success': True,
+                        'message': 'File processed successfully'
+                    }).encode())
+                else:
+                    self.send_response(500)
+                    self.send_header('Content-type', 'application/json')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({
+                        'success': False,
+                        'message': 'Error processing file'
+                    }).encode())
+
+            except Exception as e:
+                print(f"Error handling upload: {e}")
+                traceback.print_exc()
+                self.send_response(500)
+                self.send_header('Content-type', 'text/plain')
+                self.end_headers()
+                self.wfile.write(f"Error: {str(e)}".encode())
+
+            return
+
+        # For any other POST requests
+        self.send_response(404)
+        self.send_header('Content-type', 'text/plain')
+        self.end_headers()
+        self.wfile.write(b'Not found')
 
 def start_webserver(port=8000, output_file='git_commit_history.csv'):
     """Start a web server to serve the visualization files"""
@@ -278,6 +372,7 @@ def start_webserver(port=8000, output_file='git_commit_history.csv'):
     class CustomTCPServer(socketserver.TCPServer):
         def __init__(self, server_address, RequestHandlerClass, output_file=None):
             self.output_file = output_file
+            self.allow_reuse_address = True  # Add this to avoid "address already in use" errors
             super().__init__(server_address, RequestHandlerClass)
 
     try:
@@ -285,11 +380,11 @@ def start_webserver(port=8000, output_file='git_commit_history.csv'):
         httpd = CustomTCPServer(("", port), handler, output_file=output_file)
 
         print(f"Serving at http://localhost:{port}")
-        print(f"Open http://localhost:{port}/eng-stats-visualizer.html in your browser")
+        print(f"Open http://localhost:{port}/index.html in your browser")
         print(f"CSV data available at http://localhost:{port}/api/stats")
 
         # Open the browser automatically
-        webbrowser.open(f'http://localhost:{port}/eng-stats-visualizer.html')
+        webbrowser.open(f'http://localhost:{port}/')
 
         # Start the server
         httpd.serve_forever()
