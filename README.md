@@ -120,4 +120,3 @@ If you encounter any other problems, please provide:
 - Python version (`python --version`)
 - Git version (`git --version`)
 - Browser and version information
->>>>>>> 9d4948e (Engineering Activity Dashboard v.8)
