@@ -1,0 +1,30 @@
+Developer Activity Statistics
+==============================
+Visualizer
+===========
+generate a standalone single page web application that can read a csv file with the following columns Developer Name,Developer,Grade,Team followed by 12 columns with each column with a date representing a month. Each row represents work done by a developer whose name is in the "Developer Name" column.  The web application should allow filtering on the columns that are not date columns and should create a graph of the data in the columns that represent months for each developer. The graphs would be stacked in one view. It would be good to have options to visualize this data with multiple options to graph and to compare the work done across months by different developers. The web application should be user friendly and look good.
+
+Visualizer with commit details
+=================================
+modify the program so that in the data table the developer name is a link to a file in a subfolder called commit-descriptions with file name having the format developer_name_commit_history.txt. developer_name should be replaced by the name of the developer in all lowercase from the data table.
+
+The file contains multiple colmns separated by | and one line per commit. The first column is the description of the commit followed by a link to the files in the commit. Display this data in nice looking table. Add a text search at the top to search for content in the table. Clicking the link in the data table with developer name  should open a popup to display the commit description table.
+
+
+modify eng-stats.py so that after processing the input.csv file and generating the output files it starts a webserver that serves up eng-stats-visualizer.html file. Modify th eng-stats-visualizer.html so that the links from the popup modal to local files are delivered to the browser through the eng-stats.py webserver.
+
+
+regenrate the program so that it is properly refactored with python code in a separate file and all the html and java script are separate in their own files that get added to reduce the length of the each file.
+
+project intro and Setup
+-------------------------
+generate a README.md markdown file describing the dependencies needed to run setup and run estats.py on a fresh machine assuming some version of python is already installed.
+
+
+Alternate prompt
+===================
+Create a web application to display developer productivity stats based on git log and displaying the results using eng-stats.py as the basis to create the server and eng-stats-visualizer.html as the front end.
+
+Modify eng-stats.py so that it runs as an http server. The home page should provide a way to enter the content of the input.csv file directly in a table and also allows copy pasting the contents. There should be a submit button that will run the eng-stats.py code and display the results in a table on the same page using eng-stat-visualizer.html as the basis for front end code. The table should be sortable and filterable. The user should be able to click on a developer name to see their commit history in a popup modal. The commit history should be displayed in a table with links to the files changed. The user should be able to search for specific commit descriptions. The target of the link should be served by eng-stats.py over http to avoid the cors policy issues.
+
+regenerate the index.html frontend and engstats.py server so that upload input.csv is an optional action button. When clicked it should popup a dialog to select the input file containing developer informaiton. Once the file is uploaded the server should regenerate the git_commit_history.csv and the modal on the front end should close and the main page should refresh with the new develepor statistics.
