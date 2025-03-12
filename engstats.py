@@ -175,27 +175,53 @@ def process_git_logs(input_file, output_file):
     print(f"Results saved to {output_file}")
 
 class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
+    # Serve the visualizer as the default file
+    def serve_file(self, path, filename, content_type=None):
+        """Serve a file with appropriate headers based on file type"""
+        self.path = path
+
+        # First send the response
+        self.send_response(200)
+
+        # Determine content type based on file extension if not provided
+        if content_type is None:
+            if filename.endswith('.html'):
+                content_type = 'text/html'
+            elif filename.endswith('.js'):
+                content_type = 'application/javascript'
+            elif filename.endswith('.css'):
+                content_type = 'text/css'
+            else:
+                content_type = 'application/octet-stream'
+
+        self.send_header('Content-type', content_type)
+
+        # Set no-cache headers for all files to ensure fresh content
+        self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+        self.send_header('Pragma', 'no-cache')
+        self.send_header('Expires', '0')
+
+        # End headers and continue with GET request
+        self.end_headers()
+
+        # Serve the file
+        file_path = os.path.join(os.getcwd(), filename)
+        if os.path.exists(file_path):
+            with open(file_path, 'rb') as file:
+                self.wfile.write(file.read())
+        else:
+            print(f"Warning: File not found: {file_path}")
+        return
+
 
     def do_GET(self):
         # Serve the visualizer as the default file
         if self.path == '/':
-            self.path = '/eng-stats-visualizer.html'
+            self.serve_file('/index.html', 'index.html')
+            return
 
-            # First send the response and open headers
-            self.send_response(200)
-            self.send_header('Content-type', 'text/html')
-
-            # Set no-cache headers
-            self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
-            self.send_header('Pragma', 'no-cache')
-            self.send_header('Expires', '0')
-
-            # End headers and continue with GET request
-            self.end_headers()
-
-            # Serve the file
-            with open(os.path.join(os.getcwd(), 'eng-stats-visualizer.html'), 'rb') as file:
-                self.wfile.write(file.read())
+        if self.path == '/eng-stats-visualizer.html':
+            self.serve_file('/eng-stats-visualizer.html', 'eng-stats-visualizer.html')
             return
 
         # Handle API requests for commit descriptions
@@ -238,7 +264,10 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(b'Statistics file not found')
             return
-
+        else:
+            # For other requests, use the path as the filename
+            requested_path = self.path[1:]  # Remove leading slash
+            self.serve_file(self.path, requested_path)
         # For all other requests, use the default http.server.SimpleHTTPRequestHandler.do_GET(self)
 
 def start_webserver(port=8000, output_file='git_commit_history.csv'):

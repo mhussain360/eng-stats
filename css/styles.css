@@ -1,0 +1,132 @@
+body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    background-color: #f8f9fa;
+}
+.header {
+    background-color: #343a40;
+    color: white;
+    padding: 20px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+.card {
+    margin-bottom: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+.chart-container {
+    position: relative;
+    margin: auto;
+    height: 400px;
+    width: 100%;
+}
+.filter-section {
+    background-color: #ffffff;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.visualization-section {
+    background-color: #ffffff;
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.btn-primary {
+    background-color: #0d6efd;
+}
+.btn-secondary {
+    background-color: #6c757d;
+}
+select, input {
+    margin-bottom: 10px;
+}
+.chart-type-selector {
+    margin-bottom: 15px;
+}
+.file-upload {
+    margin-bottom: 20px;
+}
+#csvFileInput {
+    margin-right: 10px;
+}
+.multiselect-dropdown {
+    max-height: 200px;
+    overflow-y: auto;
+}
+.developer-comparison {
+    margin-top: 20px;
+}
+#comparison-chart-container {
+    margin-top: 15px;
+}
+/* Debug styles */
+.debug-info {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+    display: none;
+}
+/* Modal styles for commit popup */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
+}
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 90%;
+    max-width: 1200px;
+    border-radius: 5px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+.close-modal {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.close-modal:hover,
+.close-modal:focus {
+    color: black;
+    text-decoration: none;
+}
+.developer-name-link {
+    color: #0d6efd;
+    text-decoration: none;
+    cursor: pointer;
+}
+.developer-name-link:hover {
+    text-decoration: underline;
+}
+.commit-search {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+}
+.commit-table th,
+.commit-table td {
+    padding: 10px;
+    vertical-align: top;
+}
+.commit-files-link {
+    color: #6c757d;
+    margin-left: 10px;
+    font-size: 0.9em;
+}
