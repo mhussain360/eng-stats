@@ -28,13 +28,7 @@ def get_git_log_for_author(author_email, start_date):
             f'--since={start_date.strftime("%Y-%m-%d")}',
             '--format=%aI'  # ISO 8601-like format
         ]
-        """
 
-        "git  log --author kfox@duosecurity.com --since 2024-02-27 --format=%aI"
-        cmd = [
-            'ls', '-l',
-        ]
-        """
         result = subprocess.run(f'git  log --author {author_email} --since {start_date.strftime("%Y-%m-%d")} --format=%aI',
             capture_output=True,
             text=True,
@@ -166,8 +160,7 @@ def process_git_logs(input_file, output_file):
 
         # Add monthly commit counts
         for month in month_columns:
-            result_row[month] = monthly_commits.get(month, 0)
-
+            result_row[month] = monthly_commits.get(month,0)
         results.append(result_row)
 
     # Create output DataFrame
@@ -204,29 +197,58 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 self.wfile.write(b'File not found')
             return
 
+        # Handle API requests for the output CSV file
+        elif self.path == '/api/stats':
+            output_file = getattr(self.server, 'output_file', 'git_commit_history.csv')
+
+            if os.path.exists(output_file):
+                self.send_response(200)
+                self.send_header('Content-type', 'text/csv')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.send_header('Content-Disposition', f'attachment; filename="{os.path.basename(output_file)}"')
+                self.end_headers()
+
+                with open(output_file, 'rb') as file:
+                    self.wfile.write(file.read())
+            else:
+                self.send_response(404)
+                self.send_header('Content-type', 'text/plain')
+                self.end_headers()
+                self.wfile.write(b'Statistics file not found')
+            return
+
         # For all other requests, use the default handler
         return http.server.SimpleHTTPRequestHandler.do_GET(self)
 
-def start_webserver(port=8000):
+def start_webserver(port=8000, output_file='git_commit_history.csv'):
     """Start a web server to serve the visualization files"""
     handler = CustomHTTPRequestHandler
 
+    # Create a custom server class that can store additional attributes
+    class CustomTCPServer(socketserver.TCPServer):
+        def __init__(self, server_address, RequestHandlerClass, output_file=None):
+            self.output_file = output_file
+            super().__init__(server_address, RequestHandlerClass)
+
     try:
-        with socketserver.TCPServer(("", port), handler) as httpd:
-            print(f"Serving at http://localhost:{port}")
-            print(f"Open http://localhost:{port}/eng-stats-visualizer.html in your browser")
+        # Use our custom server class that supports the output_file attribute
+        httpd = CustomTCPServer(("", port), handler, output_file=output_file)
 
-            # Open the browser automatically
-            webbrowser.open(f'http://localhost:{port}/eng-stats-visualizer.html')
+        print(f"Serving at http://localhost:{port}")
+        print(f"Open http://localhost:{port}/eng-stats-visualizer.html in your browser")
+        print(f"CSV data available at http://localhost:{port}/api/stats")
 
-            # Start the server
-            httpd.serve_forever()
+        # Open the browser automatically
+        webbrowser.open(f'http://localhost:{port}/eng-stats-visualizer.html')
+
+        # Start the server
+        httpd.serve_forever()
     except KeyboardInterrupt:
         print("\nServer stopped by user.")
     except OSError as e:
         if e.errno == 48:  # Address already in use
             print(f"Port {port} is already in use. Trying another port.")
-            start_webserver(port + 1)
+            start_webserver(port + 1, output_file)
         else:
             raise
 
@@ -249,4 +271,4 @@ if __name__ == "__main__":
     process_git_logs(args.input, args.output)
 
     # Start web server in the main thread
-    start_webserver()
+    start_webserver(output_file=args.output)
