@@ -3,7 +3,9 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://d3js.org https://cdn.jsdelivr.net https://cdnjs.cloudflare.com 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; img-src 'self' data:; connect-src 'self' file: data:">
-
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
@@ -147,25 +149,9 @@
     <div class="container">
         <div class="header text-center">
             <h1>Engineering Activity Dashboard</h1>
-            <p>Upload your CSV data and visualize developer activity over time</p>
         </div>
 
-        <div class="row">
-            <div class="col-12">
-                <div class="card file-upload">
-                    <div class="card-body">
-                        <h5 class="card-title">Upload CSV File</h5>
-                        <div class="input-group">
-                            <input type="file" class="form-control" id="csvFileInput" accept=".csv">
-                            <button class="btn btn-primary" id="parseButton">Load Data</button>
-                        </div>
-                        <small class="text-muted">Format: Developer Name,Developer,Grade,Team,[Month1],[Month2],...,[Month12]</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="mainContent" style="display: none;">
+         <div id="mainContent" style="display: none;">
             <div class="row">
                 <div class="col-md-3">
                     <div class="card filter-section">
@@ -303,7 +289,6 @@
         // Initialize when document is ready
         document.addEventListener('DOMContentLoaded', function() {
             // Set up event listeners
-            document.getElementById('parseButton').addEventListener('click', parseCSV);
             document.getElementById('applyFilters').addEventListener('click', applyFilters);
             document.getElementById('resetFilters').addEventListener('click', resetFilters);
             document.getElementById('chartType').addEventListener('change', updateChartType);
@@ -330,44 +315,51 @@
 
         // Parse the uploaded CSV file
         function parseCSV() {
-            const fileInput = document.getElementById('csvFileInput');
-            const file = fileInput.files[0];
-
-
-            if (!file) {
-                alert('Please select a CSV file first.');
-                return;
-            }
-
-            Papa.parse(file, {
-                header: true,
-                dynamicTyping: false, // Keep everything as strings initially
-                skipEmptyLines: true, // Skip empty lines
-                complete: function(results) {
-                    if (results.data && results.data.length > 0) {
-                        // Make sure we have valid data with the Developer Name field
-                        csvData = results.data.filter(row => row['Developer Name'] && row['Developer Name'].trim() !== '');
-
-                        // Log data for debugging
-                        if (DEBUG) {
-                            console.log('CSV Data:', csvData);
-                        }
-
-                        // Identify month columns (any column after the first 4)
-                        const allColumns = Object.keys(results.data[0]);
-                        monthColumns = allColumns.slice(4);
-
-                        // Initialize the application with data
-                        initializeApp();
-                    } else {
-                        alert('The CSV file appears to be empty or improperly formatted.');
+            // Fetch CSV data from the server endpoint
+            fetch('/api/stats')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
                     }
-                },
-                error: function(error) {
-                    console.error('Error parsing CSV:', error);
-                    alert('Error parsing CSV file. Please check the file format.');
-                }
-            });
+                    return response.text();
+                })
+                .then(csvText => {
+                    // Parse the CSV text using PapaParse
+                    Papa.parse(csvText, {
+                        header: true,
+                        dynamicTyping: false, // Keep everything as strings initially
+                        skipEmptyLines: true, // Skip empty lines
+                        complete: function(results) {
+                            if (results.data && results.data.length > 0) {
+                                // Make sure we have valid data with the Developer Name field
+                                csvData = results.data.filter(row => row['Developer Name'] && row['Developer Name'].trim() !== '');
+
+                                // Log data for debugging
+                                if (DEBUG) {
+                                    console.log('CSV Data:', csvData);
+                                }
+
+                                // Identify month columns (any column after the first 4)
+                                const allColumns = Object.keys(results.data[0]);
+                                monthColumns = allColumns.slice(4);
+
+                                // Initialize the application with data
+                                initializeApp();
+                            } else {
+                                alert('The CSV file appears to be empty or improperly formatted.');
+                            }
+
+                        },
+                        error: function(error) {
+                            console.error('Error parsing CSV:', error);
+                            alert('Error parsing CSV file. Please check the file format.');
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching CSV data:', error);
+                    alert(`Error fetching CSV data: ${error.message}`);
+                });
         }
 
         // Initialize the application with the loaded data
@@ -647,7 +639,7 @@
                     plugins: {
                         title: {
                             display: true,
-                            text: 'Developer Comparison',
+                            text: 'Developer Statistics',
                             font: {
                                 size: 16
                             }
@@ -974,4 +966,7 @@
 
             return colors;
         }
+
+        // call parseCSV()
+        parseCSV();
 </script>

@@ -175,7 +175,29 @@ def process_git_logs(input_file, output_file):
     print(f"Results saved to {output_file}")
 
 class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
+
     def do_GET(self):
+        # Serve the visualizer as the default file
+        if self.path == '/':
+            self.path = '/eng-stats-visualizer.html'
+
+            # First send the response and open headers
+            self.send_response(200)
+            self.send_header('Content-type', 'text/html')
+
+            # Set no-cache headers
+            self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            self.send_header('Pragma', 'no-cache')
+            self.send_header('Expires', '0')
+
+            # End headers and continue with GET request
+            self.end_headers()
+
+            # Serve the file
+            with open(os.path.join(os.getcwd(), 'eng-stats-visualizer.html'), 'rb') as file:
+                self.wfile.write(file.read())
+            return
+
         # Handle API requests for commit descriptions
         if self.path.startswith('/api/commit-descriptions/'):
             # Extract filename from path
@@ -217,8 +239,7 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 self.wfile.write(b'Statistics file not found')
             return
 
-        # For all other requests, use the default handler
-        return http.server.SimpleHTTPRequestHandler.do_GET(self)
+        # For all other requests, use the default http.server.SimpleHTTPRequestHandler.do_GET(self)
 
 def start_webserver(port=8000, output_file='git_commit_history.csv'):
     """Start a web server to serve the visualization files"""
