@@ -175,7 +175,7 @@ def process_git_logs(input_file, output_file):
     print(f"Results saved to {output_file}")
 
 class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
-    # Serve the visualizer as the default file
+        # Serve the visualizer as the default file
     def serve_file(self, path, filename, content_type=None):
         """Serve a file with appropriate headers based on file type"""
         self.path = path
