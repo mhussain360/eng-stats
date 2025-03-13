@@ -69,7 +69,7 @@ Jane Smith,jane.smith@example.com,Principal,Backend
 ## Features
 
 - Monthly commit statistics visualization
-- Team and individual developer performance analysis
+- Team and individual activity analysis
 - Multiple chart types (line, bar, radar, polar area)
 - Filterable data table
 - Developer comparison with various metrics

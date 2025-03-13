@@ -21,7 +21,7 @@ const ChartManager = (function() {
                 plugins: {
                     title: {
                         display: true,
-                        text: 'Developer Performance Over Time',
+                        text: 'Developer Activity Over Time',
                         font: {
                             size: 16
                         }
@@ -59,7 +59,7 @@ const ChartManager = (function() {
     // Update the performance chart with new data
     function updatePerformanceChart(data) {
         const monthColumns = DataProcessor.getMonthColumns();
-        
+
         // Generate random colors for each developer
         const colors = Utils.generateColors(data.length);
 
