@@ -26,22 +26,12 @@ def get_git_log_for_author(author_email, start_date):
     try:
         startdt = start_date.strftime("%Y-%m-%d")
 
-        cmd = [
-            'git',
-            f'--work-tree={repo_path}'
-            'log',
-            f'--author={author_email}',
-            f'--since={start_date.strftime("%Y-%m-%d")}',
-            '--format=%aI'  # ISO 8601-like format
-        ]
-
         result = subprocess.run(f'git log --author {author_email} --since {start_date.strftime("%Y-%m-%d")} --format=%aI',
             capture_output=True,
             text=True,
             shell=True,
             cwd=repo_path)
         resultStr = result.stdout.strip().split('\n')
-        #print(f"gitlog output for {author_email} since {startdt} Ouput {resultStr} {result.stdout.strip()} cwd={repo_path}")
         return resultStr
     except Exception as e:
         print(f"Error getting git log for {author_email}: {e}")
@@ -53,7 +43,7 @@ def get_commit_descriptions_for_author(author_email, start_date):
     """
     try:
         result = subprocess.run(
-            f'git log --author {author_email} --since {start_date.strftime("%Y-%m-%d")} --format="%s | %h"',
+            f'git log --date=short --author {author_email} --since {start_date.strftime("%Y-%m-%d")} --format="%cd | %s | %h"',
             capture_output=True,
             text=True,
             shell=True,
@@ -111,12 +101,12 @@ def save_commit_descriptions(developer_name, commit_descriptions):
             if desc:  # Skip empty lines
                 # Split the description and hash
                 parts = desc.split(" | ")
-                if len(parts) == 2:
-                    description, commit_hash = parts
+                if len(parts) == 3:
+                    commit_date, description, commit_hash = parts
                     # Create GitHub commit URL
                     github_url = f"{github_repo_url}/commit/{commit_hash}"
                     # Write the description, hash, and GitHub link
-                    f.write(f"{description} | {commit_hash} | {github_url}\n")
+                    f.write(f"{commit_date} | {description} | {commit_hash} | {github_url}\n")
                 else:
                     # If format is unexpected, write the original line
                     f.write(f"{desc}\n")

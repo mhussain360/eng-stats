@@ -92,49 +92,70 @@ const CommitModal = (function() {
         commitTableBody.innerHTML = '';
 
         if (!data || data.trim() === '') {
-            commitTableBody.innerHTML = '<tr><td colspan="2" class="text-center">No commit history available</td></tr>';
+            commitTableBody.innerHTML = '<tr><td colspan="3" class="text-center">No commit history available</td></tr>';
             return;
         }
 
         // Process each line of the commit data
-        const lines = data.split('\n').filter(line => line.trim() !== '');
+        const lines = data.split('\n')
+            .filter(line => line.trim() !== '')
+            .map(line => {
+                const parts = line.split('|').map(part => part.trim());
+                return {
+                    date: parts[0] || '', // New date field
+                    desc: parts[1],
+                    filesLink: parts[3]
+                };
+            })
+            .sort((a, b) => {
+                // Sort by date in descending order (most recent first)
+                const dateA = new Date(a.date);
+                const dateB = new Date(b.date);
+                return dateB - dateA;
+            });
 
-        lines.forEach(line => {
-            const parts = line.split('|').map(part => part.trim());
+        lines.forEach(({date, desc, filesLink}) => {
+            const row = document.createElement('tr');
 
-            if (parts.length >= 2) {
-                const commitDesc = parts[0];
-                const filesLink = parts[2];
+            // Date cell
+            const dateCell = document.createElement('td');
+            dateCell.textContent = formatDate(date); // Format date as mm-yy
+            row.appendChild(dateCell);
 
-                const row = document.createElement('tr');
+            // Commit description cell
+            const descCell = document.createElement('td');
+            descCell.textContent = desc;
+            row.appendChild(descCell);
 
-                // Commit description cell
-                const descCell = document.createElement('td');
-                descCell.textContent = commitDesc;
-                row.appendChild(descCell);
-
-                // Files changed cell
-                const filesCell = document.createElement('td');
-                if (filesLink) {
-                    const fileAnchor = document.createElement('a');
-                    fileAnchor.href = filesLink;
-                    fileAnchor.textContent = 'View Changes';
-                    fileAnchor.target = '_blank';
-                    fileAnchor.className = 'commit-files-link';
-                    filesCell.appendChild(fileAnchor);
-                } else {
-                    filesCell.textContent = 'No files available';
-                }
-                row.appendChild(filesCell);
-
-                commitTableBody.appendChild(row);
+            // Files changed cell
+            const filesCell = document.createElement('td');
+            if (filesLink) {
+                const fileAnchor = document.createElement('a');
+                fileAnchor.href = filesLink;
+                fileAnchor.textContent = 'View Changes';
+                fileAnchor.target = '_blank';
+                fileAnchor.className = 'commit-files-link';
+                filesCell.appendChild(fileAnchor);
+            } else {
+                filesCell.textContent = 'No files available';
             }
+            row.appendChild(filesCell);
+
+            commitTableBody.appendChild(row);
         });
 
         // Store original table for search functionality
         commitTableBody.setAttribute('data-original', commitTableBody.innerHTML);
     }
 
+    // Add helper function to format dates as mm-yy
+    function formatDate(dateStr) {
+        const date = new Date(dateStr);
+        const day = (date.getDay() + 1).toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear().toString().slice(-2);
+        return `${month}-${year}`;
+    }
     // Filter commit table based on search input
     function filterCommitTable() {
         const searchText = document.getElementById('commitSearch').value.toLowerCase();
@@ -157,7 +178,7 @@ const CommitModal = (function() {
 
         let matchFound = false;
 
-        // Filter rows based on search
+        // Filter rows based on search (now includes date column)
         Array.from(rows).forEach(row => {
             const text = row.textContent.toLowerCase();
             if (text.includes(searchText)) {
@@ -168,7 +189,7 @@ const CommitModal = (function() {
 
         // Show message if no matches found
         if (!matchFound) {
-            commitTableBody.innerHTML = '<tr><td colspan="2" class="text-center">No matching commits found</td></tr>';
+            commitTableBody.innerHTML = '<tr><td colspan="3" class="text-center">No matching commits found</td></tr>';
         }
     }
 
