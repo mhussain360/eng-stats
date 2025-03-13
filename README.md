@@ -1,66 +1,55 @@
-# Developer Activity Statistics
-=======
 # Engineering Activity Dashboard
 
-This tool generates and displays statistics about developer contributions based on git commit history. It parses commit information from a repository, processes it into monthly statistics, and provides an interactive web dashboard for analysis.
-
-## Table of Contents
-
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Input Format](#input-format)
-- [Features](#features)
-- [Troubleshooting](#troubleshooting)
+This tool generates and displays statistics about developer contributions based on git commit history. It processes commit information from a repository, processes it into monthly statistics, and provides an interactive web dashboard for analysis.
 
 ## Prerequisites
 
 - Python 3.6 or higher
 - Git command-line tools installed and configured
+- virtualenv installed
 - Web browser (Chrome, Firefox, Safari, or Edge recommended)
 
-## Installation
+## Installation & Setup
 
 1. Clone or download this repository to your local machine.
 
-2. Install the required Python dependencies:
+2. Prepare the required files:
+   - `teamMappings.json`: Team mapping configuration
+   - `Team_detail.csv`: (Optional) Source data for generating input.csv
+   - `input.csv`: (Required if Team_detail.csv is not provided)
 
+3. Run the setup script:
 ```bash
-pip install pandas
+chmod +x setup_engstats.zsh
+./setup_engstats.zsh
 ```
 
-This project has minimal dependencies as it primarily uses Python standard library modules.
+The setup script will:
+- Create and activate a Python virtual environment
+- Install required dependencies (pandas, flask, gitpython)
+- Process Team_detail.csv to create input.csv (if source files exist)
+- Create necessary directories
+- Start the engstats server
 
-## Usage
+## Configuration Files
 
-1. Prepare an input CSV file named `input.csv` with the following columns:
-   - Developer Name: Full name of the developer
-   - Developer: Email address used for git commits
-   - Grade: Developer grade/level (optional)
-   - Team: Team name (optional)
-
-2. Run the script:
-   ```bash
-   python engstats.py --repo-path /path/to/repo --input devs.csv
-   ```
-
-3. The script will:
-   - Process git commit history for each developer
-   - Generate a CSV file with commit statistics per month
-   - Save individual commit descriptions in the `commit-descriptions` folder
-   - Start a web server and open the visualization dashboard in your browser
-
-4. The dashboard will automatically load and display the generated data. You can:
-   - Filter developers by name, grade, or team
-   - View performance trends over time
-   - Compare developer contributions
-   - View detailed commit history for each developer
-
-## Input Format
-
-The `input.csv` file should be formatted as follows:
-
+### teamMappings.json
+Team mapping configuration file that defines how supervisors map to teams:
+```json
+{
+    "supervisor name": "Team Name",
+    "ian beals": "AEX",
+    "rory scott": "Duo Directory"
+    // ... additional mappings
+}
 ```
+
+### Team_detail.csv
+Source data file containing employee details. Will be processed to create input.csv if present.
+
+### input.csv
+Required CSV file with the following columns:
+```csv
 Developer Name,Developer,Grade,Team
 John Doe,john.doe@example.com,Senior,Frontend
 Jane Smith,jane.smith@example.com,Principal,Backend
@@ -73,50 +62,68 @@ Jane Smith,jane.smith@example.com,Principal,Backend
 - Multiple chart types (line, bar, radar, polar area)
 - Filterable data table
 - Developer comparison with various metrics
-- Detailed commit history viewer with links to GitHub commits
+- Detailed commit history viewer
 - Commit description search functionality
-- Automatic web server for viewing the dashboard
+- Web-based dashboard interface
+
+## Usage
+
+1. Ensure all required files are in place.
+
+2. Run the setup script:
+```bash
+./setup_engstats.zsh
+```
+
+3. Access the dashboard in your web browser at:
+```
+http://127.0.0.1:5000
+```
+
+4. Use the dashboard to:
+- Filter developers by name, grade, or team
+- View performance trends over time
+- Compare developer contributions
+- View detailed commit history
+
+## Directory Structure
+
+```
+.
+├── data/
+│   ├── uploads/       # Uploaded files
+│   └── processed/     # Processed statistics
+├── static/            # Static web assets
+├── teamMappings.json  # Team mapping configuration
+├── Team_detail.csv    # (Optional) Source data
+├── input.csv          # Processed input data
+├── engstats.py        # Main server script
+└── setup_engstats.zsh # Setup script
+```
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Git command not found**
-   - Ensure Git is installed and available in your system PATH
-   - Try running `git --version` to verify
+1. **Setup script fails**
+- Verify Python and virtualenv are installed
+- Check if required files exist in the correct location
+- Ensure you have write permissions in the current directory
 
-2. **No commit data for developers**
-   - Check that the email addresses in your input file match those used for git commits
-   - Verify the repository path is correct
-   - Ensure the git history contains commits within the last year
+2. **Server fails to start**
+- Check if port 5000 is available
+- Verify input.csv exists or can be generated
+- Check Python dependencies are installed correctly
 
-3. **Web server fails to start**
-   - Check if the port 8000 is already in use
-   - The script will automatically try other ports if 8000 is unavailable
+3. **No data appears in dashboard**
+- Verify input.csv format is correct
+- Check server logs for processing errors
+- Ensure git repository is accessible
 
-4. **Loading spinner never disappears in commit modal**
-   - Check browser console for any CORS or network errors
-   - Verify the commit description files were generated correctly in the `commit-descriptions` folder
+### Logs and Debugging
 
-5. **Content Security Policy blocks resources**
-   - The HTML file includes a CSP that allows connections to necessary resources
-   - If you're hosting the dashboard on a different server, you may need to adjust the CSP
-
-### Browser Compatibility
-
-The dashboard has been tested with:
-- Google Chrome (recommended)
-- Mozilla Firefox
-- Microsoft Edge
-- Safari
-
-For best performance and compatibility, use the latest version of your browser.
-
-### Reporting Issues
-
-If you encounter any other problems, please provide:
-- Error messages
-- Operating system details
-- Python version (`python --version`)
-- Git version (`git --version`)
-- Browser and version information
+The setup script provides detailed output about:
+- Virtual environment creation
+- Package installation
+- File processing status
+- Server startup
