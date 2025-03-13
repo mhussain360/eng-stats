@@ -168,24 +168,32 @@ const CommitModal = (function() {
             return;
         }
 
-        // Create temporary container to search through original rows
-        const tempContainer = document.createElement('div');
-        tempContainer.innerHTML = originalHTML;
-        const rows = tempContainer.getElementsByTagName('tr');
+        // Create temporary table to properly parse the HTML structure
+        const tempTable = document.createElement('table');
+        const tempTbody = document.createElement('tbody');
+        tempTable.appendChild(tempTbody);
+        tempTbody.innerHTML = originalHTML;
+
+        const rows = tempTbody.getElementsByTagName('tr');
 
         // Clear current table
         commitTableBody.innerHTML = '';
 
         let matchFound = false;
 
-        // Filter rows based on search (now includes date column)
-        Array.from(rows).forEach(row => {
-            const text = row.textContent.toLowerCase();
-            if (text.includes(searchText)) {
-                commitTableBody.appendChild(row.cloneNode(true));
-                matchFound = true;
-            }
-        });
+        // Filter rows based on search
+          Array.from(rows).forEach(row => {
+              const cells = row.getElementsByTagName('td');
+              const date = cells[0]?.textContent || '';
+              const description = cells[1]?.textContent || '';
+
+              // Search in both date and description
+              if (date.toLowerCase().includes(searchText) ||
+                  description.toLowerCase().includes(searchText)) {
+                  commitTableBody.appendChild(row.cloneNode(true));
+                  matchFound = true;
+              }
+          });
 
         // Show message if no matches found
         if (!matchFound) {
