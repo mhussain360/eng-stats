@@ -1,5 +1,21 @@
 #!/bin/zsh
 
+# Parse command line arguments
+REPO_PATH=""
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --repo-path)
+            REPO_PATH="$2"
+            shift 2
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Usage: $0 [--repo-path /path/to/git/repo]"
+            exit 1
+            ;;
+    esac
+done
+
 echo "Setting up environment for engstats server..."
 
 # Check if pyenv is installed and set Python version
@@ -40,10 +56,9 @@ if [[ $? -ne 0 ]]; then
     exit 1
 fi
 
-# Rest of the script remains the same...
 # Install required packages
 echo "\nInstalling required packages..."
-pip install pandas flask gitpython
+pip install pandas flask gitpython Pillow
 if [[ $? -ne 0 ]]; then
     echo "Error: Failed to install required packages"
     deactivate
@@ -54,7 +69,19 @@ fi
 if [[ -f "teamMappings.json" && -f "Team_detail.csv" ]]; then
     echo "\nFound Team_detail.csv and teamMappings.json"
     echo "Processing Team_detail.csv to create input.csv..."
-    python teamDetailsToInputCSV.py Team_detail.csv input.csv teamMappings.json
+
+    # Build command based on presence of alldevs.txt
+    CMD="python teamDetailsToInputCSV.py Team_detail.csv input.csv teamMappings.json"
+    if [[ -f "alldevs.txt" ]]; then
+        echo "Found alldevs.txt, using it for email mappings"
+        CMD="$CMD --email-file alldevs.txt"
+    else
+        echo "No alldevs.txt found, proceeding without email mappings"
+    fi
+
+    # Execute the command
+    eval $CMD
+
     if [[ $? -ne 0 ]]; then
         echo "Warning: Failed to process Team_detail.csv"
         echo "Continuing with existing input.csv if available..."
@@ -77,14 +104,18 @@ if [[ ! -f "input.csv" ]]; then
     echo "\nWarning: input.csv not found. Server will start but may not function correctly until input.csv is provided."
 fi
 
-# Start the engstats server
+# Start the engstats server with optional repo path
 echo "\nStarting engstats server..."
-python engstats.py
+if [[ -n "$REPO_PATH" ]]; then
+    echo "Using git repository at: $REPO_PATH"
+    python engstats.py --repo-path "$REPO_PATH"
+else
+    echo "Using current directory as git repository"
+    python engstats.py --repo-path "."
+fi
+
 if [[ $? -ne 0 ]]; then
     echo "Error: Failed to start engstats server"
     deactivate
     exit 1
 fi
-
-# Deactivate virtual environment on script exit
-trap "echo '\nDeactivating virtual environment...'; deactivate" EXIT
