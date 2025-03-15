@@ -14,10 +14,11 @@ import sys
 import traceback
 import cgi
 import io
+import re
 
-repo_path = "/Users/mhussain/src/ZT-trustedpath/"
+repo_path = "."
 # GitHub repository URL - adjust this to your actual GitHub repository URL
-github_repo_url = "https://github.com/cisco-sbg/ZT-trustedpath/"
+github_repo_url = "" #"https://github.com/cisco-sbg/ZT-trustedpath/"
 
 def get_git_log_for_author(author_email, start_date):
     """
@@ -26,10 +27,11 @@ def get_git_log_for_author(author_email, start_date):
     try:
         startdt = start_date.strftime("%Y-%m-%d")
 
-        result = subprocess.run(f'git log --author {author_email} --since {start_date.strftime("%Y-%m-%d")} --format=%aI',
+        # git log --author {author_email} --since {start_date.strftime("%Y-%m-%d")} --format=%aI
+        result = subprocess.run(['git', 'log', '--author', author_email, '--since', start_date.strftime("%Y-%m-%d"), '--format=%aI'],
             capture_output=True,
             text=True,
-            shell=True,
+            shell=False,
             cwd=repo_path)
         resultStr = result.stdout.strip().split('\n')
         return resultStr
@@ -42,11 +44,10 @@ def get_commit_descriptions_for_author(author_email, start_date):
     Get commit descriptions and hashes for specific author since start_date
     """
     try:
-        result = subprocess.run(
-            f'git log --date=short --author {author_email} --since {start_date.strftime("%Y-%m-%d")} --format="%cd | %s | %h"',
+        result = subprocess.run(['git', 'log', '--date=short', '--author', author_email, '--since', start_date.strftime("%Y-%m-%d"), '--format=%cd | %s | %h'],
             capture_output=True,
             text=True,
-            shell=True,
+            shell=False,
             cwd=repo_path
         )
         return result.stdout.strip().split('\n')
@@ -387,6 +388,22 @@ def start_webserver(port=8000, output_file='git_commit_history.csv'):
         else:
             raise
 
+def get_github_repo_url(repo_path):
+    # Get remote URL
+    remote_url = subprocess.check_output(['git', 'remote', 'get-url', 'origin'], cwd=repo_path).decode('utf-8').strip()
+
+
+    # Convert SSH URL to HTTPS if needed
+    # From: git@github.com:username/repo.git
+    # To: https://github.com/username/repo
+    if remote_url.count('@github.com:')>0:
+        remote_url = re.sub(r'[^@]*@github.com:', 'https://github.com/', remote_url)
+
+    # Remove .git suffix
+    remote_url = remote_url.rstrip('.git')
+
+    return remote_url
+
 if __name__ == "__main__":
     import argparse
 
@@ -402,6 +419,7 @@ if __name__ == "__main__":
     if args.repo_path != repo_path:
         repo_path = args.repo_path
 
+    github_repo_url = get_github_repo_url(repo_path)
     # Process git logs with provided or default files
     process_git_logs(args.input, args.output)
 
