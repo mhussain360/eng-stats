@@ -26,8 +26,6 @@ def get_git_log_for_author(author_email, start_date):
     """
     try:
         startdt = start_date.strftime("%Y-%m-%d")
-
-        # git log --author {author_email} --since {start_date.strftime("%Y-%m-%d")} --format=%aI
         result = subprocess.run(['git', 'log', '--author', author_email, '--since', start_date.strftime("%Y-%m-%d"), '--format=%aI'],
             capture_output=True,
             text=True,
