@@ -21,16 +21,7 @@ The script will:
 
 Example team_mappings.json with comments (remove comments in actual file):
 {
-    "ian beals": "AEX",            // Exact match
-    "rory scott": "Duo Directory", // Exact match
-    "rachel": "Endpoint Identity", // Partial match
-    "vanessa": "DD Backend",       // Partial match
-    "justin": "Platform Core",     // Partial match
-    "prudhvi": "MSP",             // Partial match
-    "rob": "Passport",            // Partial match
-    "amy": "DD Frontend",         // Partial match
-    "dan": "Omni",               // Partial match
-    "riley": "Apps"              // Partial match
+    "supervisor name in all lower case": "<Team Name>",
 }
 '''
 import csv
@@ -39,6 +30,8 @@ import re
 from pathlib import Path
 import argparse
 from typing import Dict, Optional, List, Tuple
+
+from pandas.core.internals.blocks import NA
 
 # Define email domain precedence
 EMAIL_DOMAIN_PRECEDENCE = [
@@ -72,26 +65,42 @@ def get_email_precedence(email: str) -> int:
             return i
     return len(EMAIL_DOMAIN_PRECEDENCE)  # Lower precedence for other domains
 
-def parse_email_file(email_file: Path) -> Dict[str, List[str]]:
-    """Parse email mapping file and create name to email list dictionary."""
+def get_author_email_from_git(config_path: Path) -> Dict[str, List[str]]:
+    """Get author emails from git log using repository path in config."""
+    import configparser
+    import subprocess
+
     email_mappings: Dict[str, List[str]] = {}
 
     # Regular expression to parse "name <email>" format
     email_pattern = re.compile(r'^(.*?)\s*<(.+?)>$')
 
-    with email_file.open('r', encoding='utf-8') as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
+    # Get repo path from config.ini
+    config = configparser.ConfigParser()
+    config.read(config_path)
+    repo_path = config.get('DEFAULT', 'repo_path', fallback='.')
 
-            match = email_pattern.match(line)
-            if match:
-                name = match.group(1).strip().lower()
-                email = match.group(2).strip()
+    # Get unique author name/email pairs from git log
+    result = subprocess.run(
+        ['git', 'log', '--format=%aN <%aE>'],
+        capture_output=True,
+        text=True,
+        cwd=repo_path
+    )
 
-                if name not in email_mappings:
-                    email_mappings[name] = []
+    for line in result.stdout.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+
+        match = email_pattern.match(line)
+        if match:
+            name = match.group(1).strip().lower()
+            email = match.group(2).strip()
+
+            if name not in email_mappings:
+                email_mappings[name] = []
+            if email not in email_mappings[name]:
                 email_mappings[name].append(email)
 
     # Sort emails for each name by domain precedence
@@ -124,7 +133,7 @@ def get_email_address(name: str, row_email: str, email_mappings: Optional[Dict[s
 
     return row_email, None
 
-def process_csv(input_file: Path, output_file: Path, mapping_file: Path, email_file: Optional[Path] = None) -> None:
+def process_csv(input_file: Path, output_file: Path, mapping_file: Path) -> None:
     """Process input CSV and generate output CSV with mapped fields."""
     if not input_file.exists():
         raise FileNotFoundError(f"Input file not found: {input_file}")
@@ -134,11 +143,8 @@ def process_csv(input_file: Path, output_file: Path, mapping_file: Path, email_f
 
     # Load email mappings if provided
     email_mappings = None
-    if email_file:
-        if not email_file.exists():
-            raise FileNotFoundError(f"Email mapping file not found: {email_file}")
-        email_mappings = parse_email_file(email_file)
-        print(f"Loaded {len(email_mappings)} unique developer names with email mappings")
+    email_mappings = get_author_email_from_git(Path("./config.ini"))
+    print(f"Loaded {len(email_mappings)} unique developer names with email mappings")
 
     output_data = []
     email_updates: List[Tuple[str, str, str, Optional[List[str]]]] = []  # Track email updates for reporting
@@ -146,6 +152,9 @@ def process_csv(input_file: Path, output_file: Path, mapping_file: Path, email_f
     # Read input CSV
     with input_file.open('r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
+
+        if reader.fieldnames is None:
+            raise ValueError("CSV file is empty or has no headers")
 
         required_columns = {'Worker', 'Email', 'Job Level - Primary Position', 'Supervisor'}
         missing_columns = required_columns - set(reader.fieldnames)
@@ -197,17 +206,15 @@ def main():
     parser.add_argument('input_file', type=str, help='Path to input CSV file')
     parser.add_argument('output_file', type=str, help='Path to output CSV file')
     parser.add_argument('mapping_file', type=str, help='Path to team mappings JSON file')
-    parser.add_argument('--email-file', type=str, help='Optional path to email mappings file')
 
     args = parser.parse_args()
 
     input_path = Path(args.input_file)
     output_path = Path(args.output_file)
     mapping_path = Path(args.mapping_file)
-    email_path = Path(args.email_file) if args.email_file else None
 
     try:
-        process_csv(input_path, output_path, mapping_path, email_path)
+        process_csv(input_path, output_path, mapping_path)
         print(f"\nSuccessfully processed CSV. Output written to {output_path}")
 
         # Print summary of teams

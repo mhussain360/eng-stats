@@ -18,32 +18,40 @@ done
 
 echo "Setting up environment for engstats server..."
 
+# Create config.ini with repo path
+echo "\nCreating config file..."
+cat > config.ini << EOL
+[DEFAULT]
+repo_path = ${REPO_PATH:-"."}
+EOL
+
 # Check if pyenv is installed and set Python version
 if command -v pyenv 1>/dev/null 2>&1; then
     echo "\nConfiguring Python environment..."
     eval "$(pyenv init -)"
 
-    # Check if Python 3.11.11 is available
-    if pyenv versions | grep -q "3.11.11"; then
-        echo "Setting Python version to 3.11.11"
-        pyenv shell 3.11.11
+    # Find latest Python 3.7 or higher version available
+    PYTHON_VERSION=$(pyenv versions --bare | grep -E '^3\.[7-9]|^3\.[1-9][0-9]' | sort -V | tail -n1)
+    if [[ -n "$PYTHON_VERSION" ]]; then
+        echo "Setting Python version to $PYTHON_VERSION"
+        pyenv shell "$PYTHON_VERSION"
     else
-        echo "Error: Python 3.11.11 not found in pyenv"
-        echo "Please install it using: pyenv install 3.11.11"
+        echo "Error: Python 3.7 or higher not found in pyenv"
+        echo "Please install using: pyenv install 3.7.0 (or higher)"
         exit 1
     fi
 fi
 
 # Verify Python is available
-if ! command -v python >/dev/null 2>&1; then
-    echo "Error: Python command not found"
-    echo "Please ensure Python is properly installed"
+if ! command -v python3 >/dev/null 2>&1; then
+    echo "Error: Python3 command not found"
+    echo "Please ensure Python3 is properly installed"
     exit 1
 fi
 
 # Create and activate virtual environment
 echo "\nCreating virtual environment..."
-python -m venv venv
+python3 -m venv venv
 if [[ $? -ne 0 ]]; then
     echo "Error: Failed to create virtual environment"
     exit 1
@@ -70,13 +78,13 @@ if [[ -f "teamMappings.json" && -f "Team_detail.csv" ]]; then
     echo "\nFound Team_detail.csv and teamMappings.json"
     echo "Processing Team_detail.csv to create input.csv..."
 
-    # Build command based on presence of alldevs.txt
-    CMD="python teamDetailsToInputCSV.py Team_detail.csv input.csv teamMappings.json"
-    if [[ -f "alldevs.txt" ]]; then
-        echo "Found alldevs.txt, using it for email mappings"
-        CMD="$CMD --email-file alldevs.txt"
+    # Build command based on presence of emails.txt
+    CMD="python3 teamDetailsToInputCSV.py Team_detail.csv input.csv teamMappings.json"
+    if [[ -f "emails.txt" ]]; then
+        echo "Found emails.txt, using it for email mappings"
+        CMD="$CMD --email-file emails.txt"
     else
-        echo "No alldevs.txt found, proceeding without email mappings"
+        echo "No emails.txt found, proceeding without email mappings"
     fi
 
     # Execute the command
@@ -99,23 +107,5 @@ fi
 echo "\nCreating required directories..."
 mkdir -p data/uploads data/processed static
 
-# Check if input.csv exists before starting server
-if [[ ! -f "input.csv" ]]; then
-    echo "\nWarning: input.csv not found. Server will start but may not function correctly until input.csv is provided."
-fi
-
-# Start the engstats server with optional repo path
-echo "\nStarting engstats server..."
-if [[ -n "$REPO_PATH" ]]; then
-    echo "Using git repository at: $REPO_PATH"
-    python engstats.py --repo-path "$REPO_PATH"
-else
-    echo "Using current directory as git repository"
-    python engstats.py --repo-path "."
-fi
-
-if [[ $? -ne 0 ]]; then
-    echo "Error: Failed to start engstats server"
-    deactivate
-    exit 1
-fi
+echo "\nSetup complete. Use run.sh to start the server."
+deactivate

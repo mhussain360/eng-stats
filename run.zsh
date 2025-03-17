@@ -45,7 +45,7 @@ if [[ $? -ne 0 ]]; then
 fi
 
 # Build command with all optional parameters
-CMD="python engstats.py --repo-path ${(q)REPO_PATH}"
+CMD="python3 engstats.py --repo-path ${(q)REPO_PATH}"
 
 if [[ -n "$INPUT_CSV" ]]; then
     CMD="${CMD} --input-csv ${(q)INPUT_CSV}"
