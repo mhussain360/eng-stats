@@ -20,38 +20,58 @@ repo_path = "."
 # GitHub repository URL - adjust this to your actual GitHub repository URL
 github_repo_url = "" #"https://github.com/cisco-sbg/ZT-trustedpath/"
 
+def get_git_log_data_for_author(author_email, start_date):
+    """
+    Get git log data for specific author since start_date
+    Returns tuple of (commit_dates, commit_descriptions)
+    """
+    try:
+        # Get all required information in a single git log call
+        result = subprocess.run([
+            'git', 'log',
+            '--author', author_email,
+            '--since', start_date.strftime("%Y-%m-%d"),
+            '--format=%aI|%cd|%s|%h',  # ISO date, commit date, subject, hash
+            '--date=short'
+        ], capture_output=True, text=True, shell=False, cwd=repo_path)
+
+        if result.returncode != 0:
+            print(f"Error getting git log for {author_email}: {result.stderr}")
+            return [], []
+
+        # Process the output
+        commit_dates = []
+        commit_descriptions = []
+
+        for line in result.stdout.strip().split('\n'):
+            if line:  # Skip empty lines
+                try:
+                    iso_date, commit_date, subject, hash_val = line.split('|')
+                    commit_dates.append(iso_date)
+                    commit_descriptions.append(f"{commit_date} | {subject} | {hash_val}")
+                except ValueError as e:
+                    print(f"Error parsing git log line: {line}, Error: {e}")
+                    continue
+
+        return commit_dates, commit_descriptions
+    except Exception as e:
+        print(f"Error getting git log for {author_email}: {e}")
+        return [], []
+
+# Replace the original functions with wrappers that use the combined function
 def get_git_log_for_author(author_email, start_date):
     """
     Get git log for specific author since start_date
     """
-    try:
-        startdt = start_date.strftime("%Y-%m-%d")
-        result = subprocess.run(['git', 'log', '--author', author_email, '--since', start_date.strftime("%Y-%m-%d"), '--format=%aI'],
-            capture_output=True,
-            text=True,
-            shell=False,
-            cwd=repo_path)
-        resultStr = result.stdout.strip().split('\n')
-        return resultStr
-    except Exception as e:
-        print(f"Error getting git log for {author_email}: {e}")
-        return []
+    commit_dates, _ = get_git_log_data_for_author(author_email, start_date)
+    return commit_dates
 
 def get_commit_descriptions_for_author(author_email, start_date):
     """
     Get commit descriptions and hashes for specific author since start_date
     """
-    try:
-        result = subprocess.run(['git', 'log', '--date=short', '--author', author_email, '--since', start_date.strftime("%Y-%m-%d"), '--format=%cd | %s | %h'],
-            capture_output=True,
-            text=True,
-            shell=False,
-            cwd=repo_path
-        )
-        return result.stdout.strip().split('\n')
-    except Exception as e:
-        print(f"Error getting commit descriptions for {author_email}: {e}")
-        return []
+    _, commit_descriptions = get_git_log_data_for_author(author_email, start_date)
+    return commit_descriptions
 
 def count_commits_per_month(commit_dates):
     """
@@ -134,21 +154,21 @@ def process_git_logs(input_file, output_file):
         # Process each developer
         for _, row in df.iterrows():
             developer_name = row['Developer Name']
-            developer_email = row['Developer']  # This is the email column
+            developer_email = row['Developer']
             grade = row['Grade']
             team = row['Team']
             print(f"Processing developer: {developer_name}")
 
-            # Get git log for developer
-            commit_dates = get_git_log_for_author(developer_email, start_date)
+            # Get all git log data in one call
+            commit_dates, commit_descriptions = get_git_log_data_for_author(developer_email, start_date)
+
+            # Process commit dates
             monthly_commits = count_commits_per_month(commit_dates)
 
-            # Get commit descriptions and save to file
-            commit_descriptions = get_commit_descriptions_for_author(developer_email, start_date)
-            if commit_descriptions and commit_descriptions[0]:  # Check if there are any commits
+            # Save commit descriptions if any exist
+            if commit_descriptions:
                 file_path = save_commit_descriptions(developer_name, commit_descriptions)
                 print(f"Saved commit descriptions to {file_path}")
-
             # Create result row
             result_row = {
                 'Developer Name': developer_name,
