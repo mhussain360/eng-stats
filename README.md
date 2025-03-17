@@ -67,8 +67,8 @@ The setup script will:
 
 2. Use the dashboard to:
 - Filter developers by name, grade, or team
-- View performance trends over time
-- Compare developer contributions
+- View contributions over time
+- View multiple teams and developer contributions in one view
 - View detailed commit history
 
 ## Directory Structure
