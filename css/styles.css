@@ -1,296 +1,215 @@
 /* Main layout and typography */
 body {
-    font-family: Arial, sans-serif;
-    padding: 20px;
-    background-color: #f8f9fa;
+  font-family: Arial, sans-serif;
+  padding: 20px;
+  background-color: #f8f9fa;
 }
 
 .header {
-    background-color: #343a40;
-    color: white;
-    padding: 20px;
-    border-radius: 5px;
-    margin-bottom: 20px;
-    position: relative;
+  background-color: #343a40;
+  color: white;
+  padding: 20px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  position: relative;
 }
 
 .card {
-    margin-bottom: 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* Chart and visualization styles */
 .chart-container {
-    position: relative;
-    margin: auto;
-    height: 400px;
-    width: 100%;
+  position: relative;
+  margin: auto;
+  height: 400px;
+  width: 100%;
 }
 
 .filter-section {
-    background-color: #ffffff;
-    padding: 15px;
-    border-radius: 5px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    overflow: visible; /* Allow dual-listbox to overflow */
-    position: relative;
+  background-color: #ffffff;
+  padding: 15px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .visualization-section {
-    background-color: #ffffff;
-    padding: 15px;
-    border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* Dual listbox styles */
-.dual-listbox {
-    display: flex;
-    gap: 10px;
-    align-items: stretch;
-    width: 80%; /* Increased width */
-    margin-left: 0%; /* Center the wider component */
-}
-
-.list-container {
-    flex: 1;
-}
-
-.list-title {
-    font-size: 0.875rem;
-    color: #666;
-    margin-bottom: 5px;
-    white-space: nowrap;
-}
-
-.transfer-buttons {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: 0 5px;
-    min-width: 40px;
-}
-
-.transfer-buttons .btn {
-    padding: 4px 8px;
-    font-size: 12px;
-    margin: 2px 0;
-    width: 32px;
-}
-
-.form-select[multiple] {
-    height: 200px; /* Taller select boxes */
-    min-width: 180px;
+  background-color: #ffffff;
+  padding: 15px;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Button and form element styles */
 .btn-primary {
-    background-color: #0d6efd;
+  background-color: #0d6efd;
 }
 
 .btn-secondary {
-    background-color: #6c757d;
+  background-color: #6c757d;
 }
 
-select,
-input {
-    margin-bottom: 10px;
+select, input {
+  margin-bottom: 10px;
 }
 
 .chart-type-selector {
-    margin-bottom: 15px;
+  margin-bottom: 15px;
 }
 
 /* Debug styles */
 .debug-info {
-    background-color: #f8d7da;
-    color: #721c24;
-    padding: 10px;
-    margin: 10px 0;
-    border-radius: 5px;
-    display: none;
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 5px;
+  display: none;
 }
 
 /* Modal styles */
 .modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.4);
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.4);
 }
 
 .modal-content {
-    background-color: #fefefe;
-    margin: 5% auto;
-    padding: 20px;
-    border: 1px solid #888;
-    width: 90%;
-    max-width: 800px;
-    border-radius: 5px;
-    max-height: 80vh;
-    overflow-y: auto;
+  background-color: #fefefe;
+  margin: 5% auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 90%;
+  max-width: 800px;
+  border-radius: 5px;
+  max-height: 80vh;
+  overflow-y: auto;
 }
 
 .close-modal {
-    color: #aaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
 }
 
 .close-modal:hover,
 .close-modal:focus {
-    color: black;
-    text-decoration: none;
+  color: black;
+  text-decoration: none;
 }
 
 /* Commit history styles */
 .developer-name-link {
-    color: #0d6efd;
-    text-decoration: none;
-    cursor: pointer;
+  color: #0d6efd;
+  text-decoration: none;
+  cursor: pointer;
 }
 
 .developer-name-link:hover {
-    text-decoration: underline;
+  text-decoration: underline;
 }
 
 .commit-search {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 15px;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
 }
 
 .commit-table th,
 .commit-table td {
-    padding: 10px;
-    vertical-align: top;
+  padding: 10px;
+  vertical-align: top;
 }
 
 .commit-files-link {
-    color: #6c757d;
-    margin-left: 10px;
-    font-size: 0.9em;
+  color: #6c757d;
+  margin-left: 10px;
+  font-size: 0.9em;
 }
 
 /* Upload functionality styles */
 .upload-btn {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    background-color: #28a745;
-    color: white;
-    padding: 12px 24px;
-    border: none;
-    border-radius: 25px;
-    font-weight: bold;
-    font-size: 1.1em;
-    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
-    transition: all 0.3s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background-color: #28a745;
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 25px;
+  font-weight: bold;
+  font-size: 1.1em;
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+  transition: all 0.3s ease;
+  display: inline-flex;  /* Add this */
+  align-items: center;   /* Add this */
+  gap: 8px;             /* Add this */
 }
 
+/* Add specific styling for the Bootstrap icon */
 .upload-btn .bi {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2em;     /* Adjust icon size as needed */
 }
 
 .upload-btn:hover {
-    background-color: #218838;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(40, 167, 69, 0.4);
+  background-color: #218838;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(40, 167, 69, 0.4);
 }
 
 .upload-btn:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
 }
 
 .upload-btn:focus {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.3);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.3);
 }
 
 .progress {
-    margin-top: 15px;
-    display: none;
+  margin-top: 15px;
+  display: none;
 }
 
 #uploadStatus {
-    margin-top: 15px;
-    display: none;
+  margin-top: 15px;
+  display: none;
 }
 
 /* Loading overlay */
 #loadingOverlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    z-index: 2000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    color: white;
-    display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 2000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  color: white;
+  display: none;
 }
 
 .spinner-border {
-    width: 3rem;
-    height: 3rem;
-}
-
-/* Media queries for responsiveness */
-@media (max-width: 768px) {
-    .dual-listbox {
-        width: 100%;
-        margin-left: 0;
-        flex-direction: column;
-        gap: 15px;
-    }
-
-    .transfer-buttons {
-        flex-direction: row;
-        justify-content: center;
-        padding: 5px 0;
-    }
-
-    .transfer-buttons .btn {
-        transform: rotate(90deg);
-        margin: 0 2px;
-    }
-
-    .list-container {
-        width: 100%;
-    }
-
-    .form-select[multiple] {
-        width: 100%;
-        min-width: unset;
-    }
-
-    .upload-btn {
-        position: relative;
-        top: 0;
-        right: 0;
-        width: 100%;
-        margin-top: 10px;
-        justify-content: center;
-    }
+  width: 3rem;
+  height: 3rem;
 }
