@@ -1,289 +1,277 @@
-// filterManager.js - Handles filter operations with robust data normalization
+// filterManager.js
+const FilterManager = (function () {
+  // Private variables to store filter states
+  let lastAppliedFilters = {
+    developers: [],
+    grades: [],
+    teams: [],
+  };
 
-const FilterManager = (function() {
-    // Reference to the DEBUG flag from the global scope
-    const DEBUG = window.DEBUG || false;
+  /**
+   * Normalize a string value for consistent comparison
+   * @param {string} value - The value to normalize
+   * @returns {string} - Normalized value
+   */
+  function normalizeValue(value) {
+    if (value === null || value === undefined) return "";
+    return String(value).trim().toLowerCase();
+  }
 
-    /**
-     * Normalizes a string value for consistent comparison
-     * - Converts to string
-     * - Trims whitespace
-     * - Converts to lowercase
-     * - Returns empty string for null/undefined
-     */
-    function normalizeValue(value) {
-        if (value === null || value === undefined) return '';
-        return String(value).trim().toLowerCase();
+  /**
+   * Move selected items between lists
+   * @param {string} filterType - Type of filter (developers/grades/teams)
+   * @param {string} direction - Direction to move (left/right)
+   */
+  function moveSelected(filterType, direction) {
+    const sourceId =
+      direction === "left"
+        ? `available${filterType.charAt(0).toUpperCase() + filterType.slice(1)}`
+        : `selected${filterType.charAt(0).toUpperCase() + filterType.slice(1)}`;
+    const targetId =
+      direction === "left"
+        ? `selected${filterType.charAt(0).toUpperCase() + filterType.slice(1)}`
+        : `available${filterType.charAt(0).toUpperCase() + filterType.slice(1)}`;
+
+    const sourceSelect = document.getElementById(sourceId);
+    const targetSelect = document.getElementById(targetId);
+
+    if (!sourceSelect || !targetSelect) {
+      console.error(`Unable to find source or target select for ${filterType}`);
+      return;
     }
 
-    /**
-     * Populate filter dropdowns with unique, normalized values
-     */
-    function populateFilters(csvData) {
-        // Extract unique values and normalize them
-        const extractNormalizedValues = (field) => {
-            const values = new Set();
-            csvData.forEach(row => {
-                if (row[field]) {
-                    const normalizedValue = normalizeValue(row[field]);
-                    if (normalizedValue) values.add(normalizedValue);
-                }
-            });
-            return [...values].sort();
-        };
+    Array.from(sourceSelect.selectedOptions).forEach((option) => {
+      targetSelect.appendChild(option);
+    });
 
-        const developers = extractNormalizedValues('Developer Name');
-        const grades = extractNormalizedValues('Grade');
-        const teams = extractNormalizedValues('Team');
+    // Sort options
+    sortSelectOptions(targetSelect);
 
-        // Log filter options for debugging
-        if (DEBUG) {
-            console.log('Developer Filter Options:', developers);
-            console.log('Grade Filter Options:', grades);
-            console.log('Team Filter Options:', teams);
-        }
+    // Update visualizations immediately
+    applyFilters();
+  }
 
-        populateDropdown('developerFilter', developers);
-        populateDropdown('gradeFilter', grades);
-        populateDropdown('teamFilter', teams);
+  /**
+   * Move all items between lists
+   * @param {string} filterType - Type of filter (developers/grades/teams)
+   * @param {string} direction - Direction to move (left/right)
+   */
+  function moveAll(filterType, direction) {
+    const sourceId =
+      direction === "left"
+        ? `available${filterType.charAt(0).toUpperCase() + filterType.slice(1)}`
+        : `selected${filterType.charAt(0).toUpperCase() + filterType.slice(1)}`;
+    const targetId =
+      direction === "left"
+        ? `selected${filterType.charAt(0).toUpperCase() + filterType.slice(1)}`
+        : `available${filterType.charAt(0).toUpperCase() + filterType.slice(1)}`;
+
+    const sourceSelect = document.getElementById(sourceId);
+    const targetSelect = document.getElementById(targetId);
+
+    if (!sourceSelect || !targetSelect) {
+      console.error(`Unable to find source or target select for ${filterType}`);
+      return;
     }
 
-    /**
-     * Helper function to populate a dropdown with normalized options
-     */
-    function populateDropdown(elementId, options) {
-        const dropdown = document.getElementById(elementId);
-        if (!dropdown) {
-            console.error(`Dropdown element with ID '${elementId}' not found`);
-            return;
+    Array.from(sourceSelect.options).forEach((option) => {
+      targetSelect.appendChild(option);
+    });
+
+    // Sort options
+    sortSelectOptions(targetSelect);
+
+    // Update visualizations immediately
+    applyFilters();
+  }
+
+  /**
+   * Sort select options alphabetically
+   * @param {HTMLSelectElement} select - Select element to sort
+   */
+  function sortSelectOptions(select) {
+    const options = Array.from(select.options);
+    options.sort((a, b) => a.text.localeCompare(b.text));
+    options.forEach((option) => select.appendChild(option));
+  }
+
+  /**
+   * Populate filter dropdowns with initial data
+   * @param {Array} csvData - Array of data objects
+   */
+  function populateFilters(csvData) {
+    const extractUniqueValues = (field) => {
+      const values = new Set();
+      csvData.forEach((row) => {
+        if (row[field]) {
+          const value = normalizeValue(row[field]);
+          if (value) values.add(value);
         }
-
-        dropdown.innerHTML = '';
-
-        options.forEach(option => {
-            if (option !== null && option !== undefined && option !== '') {
-                const optionElement = document.createElement('option');
-                // Use the normalized value for both value and text
-                optionElement.value = option;
-                optionElement.textContent = option;
-                dropdown.appendChild(optionElement);
-            }
-        });
-    }
-
-    /**
-     * Apply filters to the data with consistent normalization
-     */
-    function applyFilters() {
-        const selectedDevelopers = getSelectedValues('developerFilter');
-        const selectedGrades = getSelectedValues('gradeFilter');
-        const selectedTeams = getSelectedValues('teamFilter');
-
-        // Log selected filters for debugging
-        if (DEBUG) {
-            const debugInfo = document.getElementById('debugInfo');
-            if (debugInfo) {
-                debugInfo.innerHTML = `
-                    <div>Selected Developers (${selectedDevelopers.length}): ${selectedDevelopers.join(', ') || 'None'}</div>
-                    <div>Selected Grades (${selectedGrades.length}): ${selectedGrades.join(', ') || 'None'}</div>
-                    <div>Selected Teams (${selectedTeams.length}): ${selectedTeams.join(', ') || 'None'}</div>
-                `;
-                debugInfo.style.display = 'block';
-            }
-
-            console.log('Selected Developers:', selectedDevelopers);
-            console.log('Selected Grades:', selectedGrades);
-            console.log('Selected Teams:', selectedTeams);
-        }
-
-        // Get a copy of the full dataset
-        let filteredData = [...DataProcessor.getAllData()];
-
-        // Debug: Log the full dataset count
-        if (DEBUG) {
-            console.log('Total records before filtering:', filteredData.length);
-        }
-
-        // Create a helper function for filtering based on a field
-        const filterByField = (data, fieldName, selectedValues) => {
-            if (!selectedValues || selectedValues.length === 0) return data;
-
-            return data.filter(row => {
-                const normalizedFieldValue = normalizeValue(row[fieldName]);
-                return selectedValues.includes(normalizedFieldValue);
-            });
-        };
-
-        // Apply each filter in sequence
-        if (selectedDevelopers.length > 0) {
-            // Debug logging for developer filtering
-            if (DEBUG) {
-                const beforeCount = filteredData.length;
-
-                // Count matches for each selected developer before filtering
-                selectedDevelopers.forEach(dev => {
-                    const matchCount = filteredData.filter(row =>
-                        normalizeValue(row['Developer Name']) === dev
-                    ).length;
-                    console.log(`Records for developer "${dev}": ${matchCount}`);
-                });
-
-                // Apply filter
-                filteredData = filterByField(filteredData, 'Developer Name', selectedDevelopers);
-
-                console.log(`After developer filter: ${beforeCount} → ${filteredData.length} records`);
-            } else {
-                filteredData = filterByField(filteredData, 'Developer Name', selectedDevelopers);
-            }
-        }
-
-        if (selectedGrades.length > 0) {
-            // Debug logging for grade filtering
-            if (DEBUG) {
-                const beforeCount = filteredData.length;
-                filteredData = filterByField(filteredData, 'Grade', selectedGrades);
-                console.log(`After grade filter: ${beforeCount} → ${filteredData.length} records`);
-            } else {
-                filteredData = filterByField(filteredData, 'Grade', selectedGrades);
-            }
-        }
-
-        if (selectedTeams.length > 0) {
-            // Debug logging for team filtering
-            if (DEBUG) {
-                const beforeCount = filteredData.length;
-                filteredData = filterByField(filteredData, 'Team', selectedTeams);
-                console.log(`After team filter: ${beforeCount} → ${filteredData.length} records`);
-            } else {
-                filteredData = filterByField(filteredData, 'Team', selectedTeams);
-            }
-        }
-
-        // Log filtered data for debugging
-        if (DEBUG) {
-            console.log('Final filtered data count:', filteredData.length);
-
-            if (filteredData.length > 0) {
-                console.log('Sample filtered records:', filteredData.slice(0, 3));
-            } else {
-                console.warn('No records match the selected filters!');
-
-                // Diagnose potential issues
-                const allData = DataProcessor.getAllData();
-
-                // Show value distribution for debugging
-                if (selectedDevelopers.length > 0) {
-                    console.log('Developer names in data with their normalized forms:');
-                    const devNameMap = new Map();
-
-                    allData.forEach(row => {
-                        if (row['Developer Name']) {
-                            const original = row['Developer Name'];
-                            const normalized = normalizeValue(original);
-                            devNameMap.set(original, normalized);
-                        }
-                    });
-
-                    console.table([...devNameMap].map(([original, normalized]) => ({
-                        'Original': original,
-                        'Normalized': normalized,
-                        'Selected?': selectedDevelopers.includes(normalized) ? 'Yes' : 'No'
-                    })));
-                }
-            }
-        }
-
-        // Store the current filtered data
-        DataProcessor.setFilteredData(filteredData);
-
-        // Update visualizations with filtered data
-        updateVisualizations(filteredData);
-    }
-
-    /**
-     * Get selected values from a dropdown with normalization
-     */
-    function getSelectedValues(elementId) {
-        const select = document.getElementById(elementId);
-        if (!select) {
-            console.error(`Select element with ID '${elementId}' not found`);
-            return [];
-        }
-
-        // Return normalized selected values
-        return Array.from(select.selectedOptions).map(option => normalizeValue(option.value));
-    }
-
-    /**
-     * Reset all filters and show all data
-     */
-    function resetFilters() {
-        // Reset all dropdowns
-        const dropdowns = ['developerFilter', 'gradeFilter', 'teamFilter'];
-        dropdowns.forEach(id => {
-            const dropdown = document.getElementById(id);
-            if (dropdown) {
-                // Deselect all options
-                for (let i = 0; i < dropdown.options.length; i++) {
-                    dropdown.options[i].selected = false;
-                }
-            }
-        });
-
-        // Get all data
-        const allData = DataProcessor.getAllData();
-
-        // Update data processor with unfiltered data
-        DataProcessor.setFilteredData(allData);
-
-        // Update all visualizations
-        updateVisualizations(allData);
-
-        // Clear debug info
-        if (DEBUG) {
-            const debugInfo = document.getElementById('debugInfo');
-            if (debugInfo) {
-                debugInfo.innerHTML = 'Filters reset';
-                debugInfo.style.display = 'block';
-            }
-        }
-    }
-
-    /**
-     * Update all visualizations with the given data
-     */
-    function updateVisualizations(data) {
-        // Update performance chart
-        if (typeof ChartManager !== 'undefined' && ChartManager.updatePerformanceChart) {
-            ChartManager.updatePerformanceChart(data);
-        } else {
-            console.error('ChartManager.updatePerformanceChart is not available');
-        }
-
-        // Update comparison chart
-        if (typeof ChartManager !== 'undefined' && ChartManager.updateComparisonChart) {
-            ChartManager.updateComparisonChart();
-        } else {
-            console.error('ChartManager.updateComparisonChart is not available');
-        }
-
-        // Update data table
-        if (typeof TableManager !== 'undefined' && TableManager.displayDataTable) {
-            TableManager.displayDataTable(data, DataProcessor.getMonthColumns());
-
-            // Update record count
-            if (TableManager.updateRecordCount) {
-                TableManager.updateRecordCount(data.length);
-            }
-        } else {
-            console.error('TableManager.displayDataTable is not available');
-        }
-    }
-
-    // Return public methods
-    return {
-        populateFilters,
-        applyFilters,
-        resetFilters
+      });
+      return [...values].sort();
     };
+
+    const developers = extractUniqueValues("Developer Name");
+    const grades = extractUniqueValues("Grade").sort((a, b) => {
+      const numA = parseFloat(a);
+      const numB = parseFloat(b);
+      if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+      if (!isNaN(numA)) return -1;
+      if (!isNaN(numB)) return 1;
+      return a.localeCompare(b);
+    });
+    const teams = extractUniqueValues("Team");
+
+    // Initially populate available lists
+    populateList("availableDevelopers", developers);
+    populateList("availableGrades", grades);
+    populateList("availableTeams", teams);
+
+    // Store initial state
+    lastAppliedFilters = {
+      developers: [],
+      grades: [],
+      teams: [],
+    };
+  }
+
+  /**
+   * Helper function to populate a list
+   * @param {string} elementId - ID of the select element
+   * @param {Array} values - Array of values to populate
+   */
+  function populateList(elementId, values) {
+    const select = document.getElementById(elementId);
+    if (!select) {
+      console.error(`Select element with ID '${elementId}' not found`);
+      return;
+    }
+
+    select.innerHTML = "";
+    values.forEach((value) => {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = value;
+      select.appendChild(option);
+    });
+  }
+
+  /**
+   * Apply filters and update visualizations
+   */
+  function applyFilters() {
+    const selectedDevelopers = Array.from(
+      document.getElementById("selectedDevelopers").options,
+    ).map((opt) => opt.value);
+    const selectedGrades = Array.from(
+      document.getElementById("selectedGrades").options,
+    ).map((opt) => opt.value);
+    const selectedTeams = Array.from(
+      document.getElementById("selectedTeams").options,
+    ).map((opt) => opt.value);
+
+    let filteredData = [...DataProcessor.getAllData()];
+
+    // Apply filters
+    if (selectedDevelopers.length > 0) {
+      filteredData = filteredData.filter((row) =>
+        selectedDevelopers.includes(normalizeValue(row["Developer Name"])),
+      );
+    }
+
+    if (selectedGrades.length > 0) {
+      filteredData = filteredData.filter((row) =>
+        selectedGrades.includes(normalizeValue(row["Grade"])),
+      );
+    }
+
+    if (selectedTeams.length > 0) {
+      filteredData = filteredData.filter((row) =>
+        selectedTeams.includes(normalizeValue(row["Team"])),
+      );
+    }
+
+    // Store current filter state
+    lastAppliedFilters = {
+      developers: selectedDevelopers,
+      grades: selectedGrades,
+      teams: selectedTeams,
+    };
+
+    // Update data processor with filtered data
+    DataProcessor.setFilteredData(filteredData);
+
+    // Update visualizations
+    updateVisualizations(filteredData);
+  }
+
+  /**
+   * Update all visualizations with filtered data
+   * @param {Array} filteredData - Array of filtered data objects
+   */
+  function updateVisualizations(filteredData) {
+    // Update charts
+    ChartManager.updatePerformanceChart(filteredData);
+    ChartManager.updateComparisonChart();
+
+    // Update data table
+    TableManager.displayDataTable(
+      filteredData,
+      DataProcessor.getMonthColumns(),
+    );
+    TableManager.updateRecordCount(filteredData.length);
+
+    // Update debug info if enabled
+    if (window.DEBUG) {
+      const debugInfo = document.getElementById("debugInfo");
+      if (debugInfo) {
+        debugInfo.innerHTML = `
+                    <div>Active Filters:</div>
+                    <div>Developers: ${lastAppliedFilters.developers.join(", ") || "None"}</div>
+                    <div>Grades: ${lastAppliedFilters.grades.join(", ") || "None"}</div>
+                    <div>Teams: ${lastAppliedFilters.teams.join(", ") || "None"}</div>
+                    <div>Filtered Records: ${filteredData.length}</div>
+                `;
+      }
+    }
+  }
+
+  /**
+   * Reset all filters to initial state
+   */
+  function resetFilters() {
+    ["Developers", "Grades", "Teams"].forEach((type) => {
+      moveAll(type.toLowerCase(), "right");
+    });
+
+    // Reset stored filter state
+    lastAppliedFilters = {
+      developers: [],
+      grades: [],
+      teams: [],
+    };
+
+    // Update visualizations with all data
+    const allData = DataProcessor.getAllData();
+    DataProcessor.setFilteredData(allData);
+    updateVisualizations(allData);
+  }
+
+  /**
+   * Get current filter state
+   * @returns {Object} Current filter state
+   */
+  function getCurrentFilters() {
+    return { ...lastAppliedFilters };
+  }
+
+  // Return public methods
+  return {
+    populateFilters,
+    moveSelected,
+    moveAll,
+    resetFilters,
+    getCurrentFilters,
+    applyFilters,
+  };
 })();
