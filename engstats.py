@@ -15,10 +15,29 @@ import traceback
 import cgi
 import io
 import re
+import pdb
 
 repo_path = "."
 # GitHub repository URL - adjust this to your actual GitHub repository URL
 github_repo_url = "" #"https://github.com/cisco-sbg/ZT-trustedpath/"
+def escape_pipe(text: str) -> str:
+    """
+    Escapes pipe characters in a string by replacing | with \|
+
+    Args:
+        text: Input string that may contain pipe characters
+
+    Returns:
+        String with escaped pipe characters
+
+    Examples:
+        >>> escape_pipe("a|b|c")
+        'a\\|b\\|c'
+        >>> escape_pipe("no|pipes|here")
+        'no\\|pipes\\|here'
+    """
+    return text.replace("|", r"\|")
+
 
 def get_git_log_data_for_author(author_email, start_date):
     """
@@ -31,7 +50,7 @@ def get_git_log_data_for_author(author_email, start_date):
             'git', 'log',
             '--author', author_email,
             '--since', start_date.strftime("%Y-%m-%d"),
-            '--format=%aI|%cd|%s|%h',  # ISO date, commit date, subject, hash
+            '--format=%aI<=>%cd<=>%s<=>%h',  # ISO date, commit date, subject, hash
             '--date=short'
         ], capture_output=True, text=True, shell=False, cwd=repo_path)
 
@@ -46,7 +65,8 @@ def get_git_log_data_for_author(author_email, start_date):
         for line in result.stdout.strip().split('\n'):
             if line:  # Skip empty lines
                 try:
-                    iso_date, commit_date, subject, hash_val = line.split('|')
+                    iso_date, commit_date, subject, hash_val = re.split('<=>', line)
+                    subject = escape_pipe(subject)
                     commit_dates.append(iso_date)
                     commit_descriptions.append(f"{commit_date} | {subject} | {hash_val}")
                 except ValueError as e:
@@ -57,21 +77,6 @@ def get_git_log_data_for_author(author_email, start_date):
     except Exception as e:
         print(f"Error getting git log for {author_email}: {e}")
         return [], []
-
-# Replace the original functions with wrappers that use the combined function
-def get_git_log_for_author(author_email, start_date):
-    """
-    Get git log for specific author since start_date
-    """
-    commit_dates, _ = get_git_log_data_for_author(author_email, start_date)
-    return commit_dates
-
-def get_commit_descriptions_for_author(author_email, start_date):
-    """
-    Get commit descriptions and hashes for specific author since start_date
-    """
-    _, commit_descriptions = get_git_log_data_for_author(author_email, start_date)
-    return commit_descriptions
 
 def count_commits_per_month(commit_dates):
     """
@@ -125,7 +130,7 @@ def save_commit_descriptions(developer_name, commit_descriptions):
                     # Create GitHub commit URL
                     github_url = f"{github_repo_url}/commit/{commit_hash}"
                     # Write the description, hash, and GitHub link
-                    f.write(f"{commit_date} | {description} | {commit_hash} | {github_url}\n")
+                    f.write(f"{commit_date} | {escape_pipe(description)} | {commit_hash} | {github_url}\n")
                 else:
                     # If format is unexpected, write the original line
                     f.write(f"{desc}\n")
@@ -240,10 +245,6 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         # Serve the visualizer as the default file
         if self.path == '/':
             self.serve_file('/index.html', 'index.html')
-            return
-
-        if self.path == '/eng-stats-visualizer.html':
-            self.serve_file('/eng-stats-visualizer.html', 'eng-stats-visualizer.html')
             return
 
         # Handle API requests for commit descriptions
