@@ -256,7 +256,7 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     check=True,
                     cwd=repo_path
                 )
-                self._send_json_success('Git pull successful', result.stdout)
+                self._send_json_success('Git pull successful', '' if result.stdout is None else result.stdout)
                 return
             except subprocess.CalledProcessError as e:
                 self._send_json_error('Git pull failed', e.stderr)
