@@ -367,6 +367,52 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 self.wfile.write(f"Error: {str(e)}".encode())
 
             return
+        if self.path == '/api/git-pull':
+            try:
+                # Get repo path from server instance
+                repo_path = getattr(self.server, 'repo_path', '.')
+
+                # Run git pull
+                result = subprocess.run(
+                    ['git', 'pull'],
+                    capture_output=True,
+                    text=True,
+                    cwd=repo_path
+                )
+
+                # Prepare response
+                if result.returncode == 0:
+                    response = {
+                        'success': True,
+                        'message': 'Git pull successful',
+                        'details': result.stdout
+                    }
+                    status_code = 200
+                else:
+                    response = {
+                        'success': False,
+                        'message': 'Git pull failed',
+                        'details': result.stderr
+                    }
+                    status_code = 500
+
+                # Send response
+                self.send_response(status_code)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps(response).encode())
+                return
+
+            except Exception as e:
+                # Handle errors
+                self.send_response(500)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({
+                    'success': False,
+                    'message': f'Error executing git pull: {str(e)}'
+                }).encode())
+                return
 
         # For any other POST requests
         self.send_response(404)
@@ -374,36 +420,31 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(b'Not found')
 
-def start_webserver(port=8000, output_file='git_commit_history.csv'):
+def start_webserver(port=8000, output_file='git_commit_history.csv', repo_path='.'):
     """Start a web server to serve the visualization files"""
     handler = CustomHTTPRequestHandler
 
     # Create a custom server class that can store additional attributes
     class CustomTCPServer(socketserver.TCPServer):
-        def __init__(self, server_address, RequestHandlerClass, output_file=None):
+        def __init__(self, server_address, RequestHandlerClass, output_file=None, repo_path=None):
             self.output_file = output_file
-            self.allow_reuse_address = True  # Add this to avoid "address already in use" errors
+            self.repo_path = repo_path
+            self.allow_reuse_address = True
             super().__init__(server_address, RequestHandlerClass)
 
     try:
-        # Use our custom server class that supports the output_file attribute
-        httpd = CustomTCPServer(("", port), handler, output_file=output_file)
-
+        httpd = CustomTCPServer(("", port), handler, output_file=output_file, repo_path=repo_path)
         print(f"Serving at http://localhost:{port}")
         print(f"Open http://localhost:{port}/index.html in your browser")
         print(f"CSV data available at http://localhost:{port}/api/stats")
-
-        # Open the browser automatically
         webbrowser.open(f'http://localhost:{port}/')
-
-        # Start the server
         httpd.serve_forever()
     except KeyboardInterrupt:
         print("\nServer stopped by user.")
     except OSError as e:
-        if e.errno == 48:  # Address already in use
+        if e.errno == 48:
             print(f"Port {port} is already in use. Trying another port.")
-            start_webserver(port + 1, output_file)
+            start_webserver(port + 1, output_file, repo_path)
         else:
             raise
 
@@ -443,4 +484,4 @@ if __name__ == "__main__":
     process_git_logs(args.input, args.output)
 
     # Start web server in the main thread
-    start_webserver(output_file=args.output)
+    start_webserver(output_file=args.output, repo_path=args.repo_path)

@@ -33,12 +33,14 @@
         <div class="container-fluid">
             <div class="header text-center">
                 <h1>Engineering Activity Dashboard</h1>
-                <button
-                    id="uploadButton"
-                    class="btn btn-outline-light upload-btn"
-                >
-                    <i class="bi bi-cloud-upload"></i> Upload Developer Data
-                </button>
+                <div class="header-buttons">
+                    <button id="uploadButton" class="btn btn-outline-light upload-btn">
+                        <i class="bi bi-cloud-upload"></i> Upload Developer Data
+                    </button>
+                    <button id="gitPullButton" class="btn btn-outline-light git-pull-btn">
+                        <i class="bi bi-arrow-down"></i> Git Pull
+                    </button>
+                </div>
             </div>
 
             <div id="mainContent" style="display: none">
@@ -443,5 +445,6 @@
         <script src="js/commitModal.js"></script>
         <script src="js/uploadHandler.js"></script>
         <script src="js/app.js"></script>
+        <script src="js/gitHandler.js"></script>
     </body>
 </html>

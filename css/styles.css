@@ -1,30 +1,95 @@
-/* Main layout and typography */
+/* Base styles and typography */
 body {
     font-family: Arial, sans-serif;
     padding: 20px;
     background-color: #f8f9fa;
 }
 
+/* Header and navigation */
 .header {
     background-color: #343a40;
     color: white;
     padding: 20px;
     border-radius: 5px;
     margin-bottom: 20px;
-    position: relative;
 }
 
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 2em;
+}
+
+.header-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* Button styles */
+.upload-btn,
+.git-pull-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 25px;
+    font-weight: bold;
+    font-size: 1.1em;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 200px;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.upload-btn {
+    background-color: #28a745;
+    color: white;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.git-pull-btn {
+    background-color: #6610f2;
+    color: white;
+    box-shadow: 0 4px 12px rgba(102, 16, 242, 0.3);
+}
+
+.upload-btn:hover {
+    background-color: #218838;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(40, 167, 69, 0.4);
+}
+
+.git-pull-btn:hover {
+    background-color: #520dc2;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(102, 16, 242, 0.4);
+}
+
+.upload-btn:active,
+.git-pull-btn:active {
+    transform: translateY(0);
+}
+
+.upload-btn .bi,
+.git-pull-btn .bi {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2em;
+}
+
+/* Card and container styles */
 .card {
     margin-bottom: 20px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* Chart and visualization styles */
-.chart-container {
-    position: relative;
-    margin: auto;
-    height: 400px;
-    width: 100%;
 }
 
 .filter-section {
@@ -33,7 +98,7 @@ body {
     border-radius: 5px;
     margin-bottom: 20px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    overflow: visible; /* Allow dual-listbox to overflow */
+    overflow: visible;
     position: relative;
 }
 
@@ -44,13 +109,24 @@ body {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+/* Chart styles */
+.chart-container {
+    position: relative;
+    margin: auto;
+    height: 400px;
+    width: 100%;
+}
+
+.chart-type-selector {
+    margin-bottom: 15px;
+}
+
 /* Dual listbox styles */
 .dual-listbox {
     display: flex;
     gap: 10px;
     align-items: stretch;
-    width: 100%; /* Increased width */
-    margin-left: 0%; /* Center the wider component */
+    width: 100%;
 }
 
 .list-container {
@@ -80,36 +156,8 @@ body {
 }
 
 .form-select[multiple] {
-    height: 200px; /* Taller select boxes */
+    height: 200px;
     min-width: 180px;
-}
-
-/* Button and form element styles */
-.btn-primary {
-    background-color: #0d6efd;
-}
-
-.btn-secondary {
-    background-color: #6c757d;
-}
-
-select,
-input {
-    margin-bottom: 10px;
-}
-
-.chart-type-selector {
-    margin-bottom: 15px;
-}
-
-/* Debug styles */
-.debug-info {
-    background-color: #f8d7da;
-    color: #721c24;
-    padding: 10px;
-    margin: 10px 0;
-    border-radius: 5px;
-    display: none;
 }
 
 /* Modal styles */
@@ -152,16 +200,6 @@ input {
 }
 
 /* Commit history styles */
-.developer-name-link {
-    color: #0d6efd;
-    text-decoration: none;
-    cursor: pointer;
-}
-
-.developer-name-link:hover {
-    text-decoration: underline;
-}
-
 .commit-search {
     width: 100%;
     padding: 10px;
@@ -182,55 +220,13 @@ input {
     font-size: 0.9em;
 }
 
-/* Upload functionality styles */
-.upload-btn {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    background-color: #28a745;
-    color: white;
-    padding: 12px 24px;
-    border: none;
-    border-radius: 25px;
-    font-weight: bold;
-    font-size: 1.1em;
-    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
-    transition: all 0.3s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.upload-btn .bi {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2em;
-}
-
-.upload-btn:hover {
-    background-color: #218838;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(40, 167, 69, 0.4);
-}
-
-.upload-btn:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
-}
-
-.upload-btn:focus {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.3);
-}
-
-.progress {
-    margin-top: 15px;
-    display: none;
-}
-
-#uploadStatus {
-    margin-top: 15px;
+/* Debug info */
+.debug-info {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
     display: none;
 }
 
@@ -243,12 +239,11 @@ input {
     height: 100%;
     background-color: rgba(0, 0, 0, 0.7);
     z-index: 2000;
-    display: flex;
+    display: none;
     justify-content: center;
     align-items: center;
     flex-direction: column;
     color: white;
-    display: none;
 }
 
 .spinner-border {
@@ -256,11 +251,36 @@ input {
     height: 3rem;
 }
 
-/* Media queries for responsiveness */
+/* Upload related styles */
+.progress {
+    margin-top: 15px;
+    display: none;
+}
+
+#uploadStatus {
+    margin-top: 15px;
+    display: none;
+}
+
+/* Responsive design */
 @media (max-width: 768px) {
-    .dual-listbox {
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .header-buttons {
         width: 100%;
-        margin-left: 0;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .upload-btn,
+    .git-pull-btn {
+        width: 100%;
+    }
+
+    .dual-listbox {
         flex-direction: column;
         gap: 15px;
     }
@@ -285,12 +305,32 @@ input {
         min-width: unset;
     }
 
-    .upload-btn {
-        position: relative;
-        top: 0;
-        right: 0;
-        width: 100%;
-        margin-top: 10px;
-        justify-content: center;
+    h1 {
+        font-size: 1.5em;
+    }
+}
+
+/* Medium screen adjustments */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .header-content {
+        gap: 15px;
+    }
+
+    .header h1 {
+        font-size: 1.75em;
+    }
+
+    .upload-btn,
+    .git-pull-btn {
+        padding: 10px 20px;
+        min-width: 180px;
+        font-size: 1em;
+    }
+}
+
+/* Large screen adjustments */
+@media (min-width: 1025px) {
+    .header-content {
+        padding: 0 20px;
     }
 }
