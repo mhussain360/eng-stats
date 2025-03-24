@@ -1,6 +1,6 @@
 # Engineering Activity Dashboard
 
-This tool generates and displays statistics about developer contributions based on git commit history. It processes commit information from a repository, processes it into monthly statistics, and provides an interactive web dashboard for analysis.
+This tool generates and displays statistics about engineering activity based on git commit history. It processes commit information from a repository, processes it into monthly statistics, and provides an interactive web dashboard for analysis.
 
 ## Prerequisites
 
