@@ -46,7 +46,7 @@ def load_team_mappings(mapping_file: Path) -> dict:
         raise FileNotFoundError(f"Team mapping file not found: {mapping_file}")
 
     try:
-        with mapping_file.open('r', encoding='utf-8') as f:
+        with mapping_file.open('r', encoding='utf-8-sig') as f:
             mappings = json.load(f)
 
         if not isinstance(mappings, dict):
@@ -150,7 +150,7 @@ def process_csv(input_file: Path, output_file: Path, mapping_file: Path) -> None
     email_updates: List[Tuple[str, str, str, Optional[List[str]]]] = []  # Track email updates for reporting
 
     # Read input CSV
-    with input_file.open('r', encoding='utf-8') as f:
+    with input_file.open('r', encoding='utf-8-sig') as f:
         reader = csv.DictReader(f)
 
         if reader.fieldnames is None:
