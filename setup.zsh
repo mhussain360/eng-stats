@@ -80,12 +80,7 @@ if [[ -f "teamMappings.json" && -f "Team_detail.csv" ]]; then
 
     # Build command based on presence of emails.txt
     CMD="python3 teamDetailsToInputCSV.py Team_detail.csv input.csv teamMappings.json"
-    if [[ -f "emails.txt" ]]; then
-        echo "Found emails.txt, using it for email mappings"
-        CMD="$CMD --email-file emails.txt"
-    else
-        echo "No emails.txt found, proceeding without email mappings"
-    fi
+
 
     # Execute the command
     eval $CMD
